@@ -1,0 +1,20 @@
+.App {
+  text-align: center;
+  padding: 20px;
+}
+
+.form {
+  margin-bottom: 20px;
+}
+
+.MuiTextField-root {
+  width: 200px;
+}
+
+.MuiButton-containedPrimary {
+  background-color: #1976d2;
+  color: #fff;
+  &:hover {
+      background-color: #155a9e;
+  }
+}
