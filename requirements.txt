@@ -4,3 +4,7 @@ seaborn
 statsmodels
 arch
 ruptures
+tensorflow 
+scikit-learn 
+numpy 
+joblib
