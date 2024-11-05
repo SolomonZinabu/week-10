@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import pandas as pd
 import joblib
 from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:3000"])  # Allow CORS for localhost:3000
 
 # Load data and models
 data_path = "data/BrentOilPrices.csv"
