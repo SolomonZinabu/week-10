@@ -3,9 +3,9 @@ from flask_cors import CORS
 import pandas as pd
 import joblib
 from tensorflow.keras.models import load_model
-
+ 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"])  # Allow CORS for localhost:3000
+CORS(app, origins=["http://localhost:3000"])  # Allow CORS for localhost:3000  might need to change to allow all for testing purposes
 
 # Load data and models
 data_path = "data/BrentOilPrices.csv"
