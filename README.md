@@ -1,108 +1,250 @@
-# Brent Oil Price Analysis - Interim Submission
+# Brent Oil Prices Analysis and Dashboard Development
 
-This project analyzes historical Brent oil prices to detect significant changes and understand how political and economic events affect price trends. The analysis is part of Birhan Energies’ mission to support stakeholders in the energy sector with data-driven insights.
+## Task 1: Time Series Analysis and Basic EDA
 
-## Project Structure
+### Overview
 
-```plaintext
-project/
-│
-├── data/
-│   └── BrentOilPrices.csv       # Dataset containing historical Brent oil prices
-│
-├── notebooks/
-│   └── task-1.ipynb             # Notebook covering Task 1 (Data Analysis Workflow & EDA)
-│
-└── scripts/
-    └── data_analysis_workflow.py # Python script with data loading, preprocessing, and ARIMA model functions
-Data Summary
-The dataset (BrentOilPrices.csv) contains daily Brent oil prices from May 20, 1987, to September 30, 2022, with two main columns:
+In Task 1, we perform initial exploration of the historical Brent oil prices dataset to understand trends, patterns, and any anomalies present in the data.
 
-Date: Date of the price record
-Price: Price of Brent oil in USD per barrel
-Requirements
-To run the code, install the necessary packages:
+### Data Loading and Preprocessing
 
-pip install pandas matplotlib seaborn statsmodels
-Analysis Workflow
-Load Data: Load and preprocess data to ensure consistent date formats and handle any missing values.
-Exploratory Data Analysis (EDA): Visualize the time series data to identify trends and fluctuations.
-ARIMA Model: Fit an ARIMA model to analyze price trends and detect changes.
-Change Point Detection: Identify periods of significant changes in the oil prices (to be further explored).
-Key Files
-1. notebooks/task-1.ipynb
-The main notebook for defining the data analysis workflow, performing EDA, and fitting an ARIMA model.
-
-Code Snippet: Loading Data and Initial EDA
-
+```python
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-# Load the data
+# Load the dataset
 data_path = "../data/BrentOilPrices.csv"
 df = pd.read_csv(data_path)
 
-# Convert Date to datetime
-df['Date'] = pd.to_datetime(df['Date'], infer_datetime_format=True)
+# Convert 'Date' column to datetime format
+df['Date'] = pd.to_datetime(df['Date'])
 
-# Plot the price trend
+# Set 'Date' as the index
+df.set_index('Date', inplace=True)
+
+# Display the first few rows
+print(df.head())
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Plot Brent oil prices over time
 plt.figure(figsize=(14, 7))
-sns.lineplot(data=df, x='Date', y='Price')
+sns.lineplot(data=df, x=df.index, y='Price')
 plt.title('Brent Oil Prices Over Time')
 plt.xlabel('Date')
 plt.ylabel('Price (USD per Barrel)')
 plt.show()
 
 
-2. scripts/data_analysis_workflow.py
-This script includes functions for data preprocessing, visualization, and ARIMA model fitting.
+### Key Insights
 
-Code Snippet: ARIMA Model Fitting and Residuals Analysis
+- The line plot reveals significant fluctuations in oil prices over the decades.
+- Volatility corresponds with major geopolitical and economic events.
 
+
+## Task 2: Advanced Time Series and Econometric Modeling
+
+### Overview
+
+In Task 2, we refine the analysis by applying advanced time series models, such as ARIMA, GARCH, Markov-Switching ARIMA, and LSTM, to better understand trends, volatility, and regime changes in Brent oil prices.
+
+### ARIMA Model Implementation
+
+```python
 from statsmodels.tsa.arima.model import ARIMA
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-def fit_arima_model(df):
-    """Fit an ARIMA model to the Brent oil price data."""
-    df.set_index('Date', inplace=True)
-    model = ARIMA(df['Price'], order=(5,1,0))  # Order can be tuned
-    model_fit = model.fit()
-    print(model_fit.summary())
-    return model_fit
-
-def plot_residuals(model_fit):
-    """Plot residuals to assess model performance."""
-    residuals = model_fit.resid
-    plt.figure(figsize=(10, 6))
-    sns.histplot(residuals, kde=True)
-    plt.title('Residuals of ARIMA Model')
-    plt.xlabel("Residuals")
-    plt.show()
-
-# Load data and run ARIMA model
-data_path = "../data/BrentOilPrices.csv"
-df = pd.read_csv(data_path)
-df['Date'] = pd.to_datetime(df['Date'], infer_datetime_format=True)
 
 # Fit ARIMA model
-model_fit = fit_arima_model(df)
-plot_residuals(model_fit)
+arima_model = ARIMA(df['Price'], order=(5, 1, 0))
+arima_fit = arima_model.fit()
+
+# Summary of the ARIMA model
+print(arima_fit.summary())
+
+from arch import arch_model
+
+# Fit GARCH model
+price_diff = df['Price'].diff().dropna()
+garch_model = arch_model(price_diff, vol='Garch', p=1, q=1)
+garch_fit = garch_model.fit(disp='off')
+
+# Summary of the GARCH model
+print(garch_fit.summary())
 
 
-Model Summary
-Our ARIMA(5,1,0) model provided initial insights into the price trend. Here’s a brief summary:
+from arch import arch_model
 
-AIC: 29093.226
-BIC: 29135.862
-Standard Error (Sigma): 1.4767
-Key Findings
-The model residuals indicate some potential volatility in the data.
-High kurtosis and skewness suggest that certain periods experience heightened volatility, likely linked to external events.
-Next Steps
-For the final submission, we plan to:
+# Fit GARCH model
+price_diff = df['Price'].diff().dropna()
+garch_model = arch_model(price_diff, vol='Garch', p=1, q=1)
+garch_fit = garch_model.fit(disp='off')
 
-Improve Model Accuracy: Explore alternative models like GARCH to better handle volatility clustering.
-Change Point Analysis: Implement Bayesian change point detection for identifying major shifts in price trends.
-Dashboard Development: Visualize results through an interactive dashboard for stakeholder engagement.
+# Summary of the GARCH model
+print(garch_fit.summary())
+
+
+from statsmodels.tsa.regime_switching.markov_regression import MarkovRegression
+
+# Fit Markov-Switching ARIMA model
+ms_arima = MarkovRegression(df['Price'], k_regimes=2, trend='c', switching_variance=True)
+ms_arima_fit = ms_arima.fit()
+
+# Summary of the Markov-Switching ARIMA model
+print(ms_arima_fit.summary())
+
+
+### LSTM Model Implementation
+
+```python
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
+
+# Prepare data for LSTM
+scaler = MinMaxScaler()
+scaled_data = scaler.fit_transform(df['Price'].values.reshape(-1, 1))
+
+def prepare_lstm_data(series, n_lags):
+    X, y = [], []
+    for i in range(n_lags, len(series)):
+        X.append(series[i-n_lags:i])
+        y.append(series[i])
+    return np.array(X), np.array(y)
+
+X, y = prepare_lstm_data(scaled_data, 10)
+
+# Build LSTM model
+model_lstm = Sequential([
+    LSTM(units=50, return_sequences=True, input_shape=(X.shape[1], 1)),
+    LSTM(units=50),
+    Dense(units=1)
+])
+
+model_lstm.compile(optimizer='adam', loss='mean_squared_error')
+model_lstm.fit(X, y, epochs=20, batch_size=32)
+
+
+### Key Insights
+
+- **ARIMA**: Captures linear trends effectively but struggles with volatility.
+- **GARCH**: Excellent for modeling and forecasting volatility.
+- **Markov-Switching ARIMA**: Highlights regime shifts, correlating with major market events.
+- **LSTM**: Handles complex, non-linear patterns and dependencies.
+
+
+## Task 3: Developing an Interactive Dashboard
+
+### Overview
+
+In Task 3, we build an interactive dashboard using Flask for the backend and React for the frontend. This dashboard visualizes the results of the Brent oil prices analysis, allowing users to interact with the data through dynamic visualizations and filters.
+
+### Flask Backend
+
+#### Setting Up Flask and API Endpoints
+
+```python
+from flask import Flask, jsonify, request
+import pandas as pd
+
+app = Flask(__name__)
+
+# Load the dataset
+data_path = "../data/BrentOilPrices.csv"
+df = pd.read_csv(data_path)
+df['Date'] = pd.to_datetime(df['Date'])
+
+# API to get historical data
+@app.route('/api/data', methods=['GET'])
+def get_data():
+    start_date = request.args.get('start', default='1987-05-20')
+    end_date = request.args.get('end', default='2022-09-30')
+    filtered_data = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+    return jsonify(filtered_data.to_dict(orient='records'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
+import { TextField, Button, Container, Typography } from '@mui/material';
+
+function App() {
+    const [data, setData] = useState([]);
+    const [startDate, setStartDate] = useState('1987-05-20');
+    const [endDate, setEndDate] = useState('2022-09-30');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = () => {
+        setLoading(true);
+        fetch(`http://localhost:5000/api/data?start=${startDate}&end=${endDate}`)
+            .then(response => response.json())
+            .then(data => {
+                setData(data);
+                setLoading(false);
+            })
+            .catch(error => {
+                setError(error);
+                setLoading(false);
+            });
+    };
+
+    const handleDateSubmit = (e) => {
+        e.preventDefault();
+        fetchData();
+    };
+
+    return (
+        <Container className="App">
+            <Typography variant="h4" gutterBottom>
+                Brent Oil Prices Dashboard
+            </Typography>
+            <form onSubmit={handleDateSubmit} className="form">
+                <TextField
+                    label="Start Date"
+                    type="date"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    variant="outlined"
+                    style={{ marginRight: '20px' }}
+                />
+                <TextField
+                    label="End Date"
+                    type="date"
+                    value={endDate}
+                    onChange={e => setEndDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    variant="outlined"
+                />
+                <Button type="submit" variant="contained" color="primary" style={{ marginLeft: '20px' }}>
+                    Fetch Data
+                </Button>
+            </form>
+            {loading ? <Typography>Loading...</Typography> : (
+                <LineChart width={800} height={400} data={data}>
+                    <Line type="monotone" dataKey="Price" stroke="#1976d2" />
+                    <CartesianGrid stroke="#ccc" />
+                    <XAxis dataKey="Date" />
+                    <YAxis />
+                    <Tooltip />
+                </LineChart>
+            )}
+            {error && <Typography color="error">Error loading data: {error.message}</Typography>}
+        </Container>
+    );
+}
+
+export default App;
+
+
+
+Key Features
+Dynamic Date Filtering: Users can input custom start and end dates to fetch and visualize specific data ranges.
+Interactive Visualization: Line chart displays historical trends, with tooltips for detailed information.
+Enhanced UI: Utilizes Material-UI for a modern, responsive design.
